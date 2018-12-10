@@ -1,7 +1,7 @@
 package: github.com/pluto
 import:
 - package: github.com/ethereum/go-ethereum
-  version: develop
+  version: master
   repo:    git@github.com:zhuzeyu/go-ethereum.git
   vcs:     git
   subpackages:
@@ -11,7 +11,7 @@ import:
   - console
   - ethclient
 - package: github.com/tendermint/tendermint
-  version: develop
+  version: master
   repo:    git@github.com:zhuzeyu/tendermint.git
   vcs:     git
   subpackages:
