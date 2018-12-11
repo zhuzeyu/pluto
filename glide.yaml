@@ -1,4 +1,4 @@
-package: github.com/pluto
+package: github.com/zhuzeyu/pluto
 import:
 - package: github.com/ethereum/go-ethereum
   version: master
