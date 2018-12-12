@@ -38,7 +38,6 @@ func (n *Node) Start() error {
 }
 
 // NewNodeConfig for p2p and network layer
-// #unstable
 func NewNodeConfig(ctx *cli.Context) *node.Config {
 	nodeConfig := new(node.Config)
 	ethUtils.SetNodeConfig(ctx, nodeConfig)
@@ -47,7 +46,6 @@ func NewNodeConfig(ctx *cli.Context) *node.Config {
 }
 
 // NewEthConfig for the ethereum services
-// #unstable
 func NewEthConfig(ctx *cli.Context, stack *node.Node) *eth.Config {
 	ethConfig := new(eth.Config)
 	ethUtils.SetEthConfig(ctx, stack, ethConfig)

@@ -1,4 +1,5 @@
 package utils
+
 import (
 	"math/big"
 	"os"
@@ -10,7 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/node"
 	"github.com/ethereum/go-ethereum/params"
 
-	"github.com/pluto/ethereum"
+	"github.com/zhuzeyu/pluto/ethereum"
 
 	rpcClient "github.com/tendermint/tendermint/rpc/lib/client"
 )
@@ -102,7 +103,7 @@ func SetEthermintNodeConfig(cfg *node.Config) {
 func SetEthermintEthConfig(cfg *eth.Config) {
 	/*cfg.MaxPeers = 0
 	cfg.PowFake = true*/
-	cfg.Ethash.PowMode=3
+	cfg.Ethash.PowMode = 3
 
 }
 

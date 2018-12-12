@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
+	"github.com/tendermint/tendermint/p2p"
+	"github.com/tendermint/tendermint/privval"
 	"os"
 	"strings"
-
-	"gopkg.in/urfave/cli.v1"
 
 	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
@@ -13,18 +13,17 @@ import (
 	"github.com/ethereum/go-ethereum/console"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/log"
-
-	abciApp "github.com/pluto/app"
-	emtUtils "github.com/pluto/cmd/utils"
-	tmcfg "github.com/tendermint/tendermint/config"
-	tmNode "github.com/tendermint/tendermint/node"
-	"github.com/tendermint/tendermint/proxy"
-	"github.com/tendermint/tendermint/types"
+	"gopkg.in/urfave/cli.v1"
 
 	"github.com/tendermint/tendermint/abci/server"
-
-	plutoUtils "github.com/pluto/cmd/utils"
-	"github.com/pluto/ethereum"
+	tmcfg "github.com/tendermint/tendermint/config"
+	cmn "github.com/tendermint/tendermint/libs/common"
+	tmlog "github.com/tendermint/tendermint/libs/log"
+	tmNode "github.com/tendermint/tendermint/node"
+	"github.com/tendermint/tendermint/proxy"
+	abciApp "github.com/zhuzeyu/pluto/app"
+	emtUtils "github.com/zhuzeyu/pluto/cmd/utils"
+	"github.com/zhuzeyu/pluto/ethereum"
 )
 
 func plutoCmd(ctx *cli.Context) error {
@@ -49,7 +48,7 @@ func plutoCmd(ctx *cli.Context) error {
 	}
 
 	// Create the ABCI app
-	ethApp, err := abciApp.NewEthermintApplication(backend, rpcClient, nil)
+	ethApp, err := abciApp.NewPlutoApplication(backend, rpcClient, nil)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -61,41 +60,41 @@ func plutoCmd(ctx *cli.Context) error {
 	// See Issue https://github.com/tendermint/ethermint/issues/244
 	canInvokeTendermintNode := canInvokeTendermint(ctx)
 	if canInvokeTendermintNode {
-		/*		pauseDuration := 2 * time.Second
-				tendermintHome := tendermintHomeFromEthermint(ctx)
-				tendermintArgs := []string{"--home", tendermintHome, "node"}
-				log.Info("tendermint ready to init")
-				time.Sleep(pauseDuration)
-				if _, err := invokeTendermintNoTimeout(tendermintArgs...); err != nil {
-					// We shouldn't go *Fatal* because
-					// `tendermint node` might have already been invoked.
-					log.Info("tendermint init", "error", err)
-				} else {
-					log.Info("Successfully invoked `tendermint node`", "args",
-						tendermintArgs)
-				}*/
-
 		tmConfig := loadTMConfig(ctx)
+		clientCreator := proxy.NewLocalClientCreator(ethApp)
+		tmLogger := tmlog.NewTMLogger(tmlog.NewSyncWriter(os.Stdout)).With("module", "tendermint")
+
+		// Generate node PrivKey
+		nodeKey, err := p2p.LoadOrGenNodeKey(tmConfig.NodeKeyFile())
+		if err != nil {
+			return err
+		}
+
 		n, err := tmNode.NewNode(tmConfig,
-			types.LoadOrGenPrivValidatorFS(tmConfig.PrivValidatorFile()),
-			proxy.NewLocalClientCreator(ethApp),
+			privval.LoadOrGenFilePV(tmConfig.PrivValidatorFile()),
+			nodeKey,
+			clientCreator,
 			tmNode.DefaultGenesisDocProviderFunc(tmConfig),
 			tmNode.DefaultDBProvider,
-			tmlog.NewTMLogger(tmlog.NewSyncWriter(os.Stdout)))
+			tmNode.DefaultMetricsProvider(tmConfig.Instrumentation),
+			tmLogger)
 		if err != nil {
 			log.Info("tendermint newNode", "error", err)
 			return err
 		}
 
+		backend.SetMemPool(n.MempoolReactor().Mempool)
+		//n.MempoolReactor().Mempool.SetRecheckFailCallback(backend.Ethereum().TxPool().RemoveTxs)
+
 		err = n.Start()
 		if err != nil {
-			log.Info("server with tendermint start", "error", err)
+			log.Error("server with tendermint start", "error", err)
 			return err
 		}
-
 		// Trap signal, run forever.
-		n.RunForever()
+		//n.RunForever()
 		return nil
+
 	} else {
 		// Start the app on the ABCI server
 		srv, err := server.NewServer(addr, abci, ethApp)
@@ -119,7 +118,6 @@ func plutoCmd(ctx *cli.Context) error {
 	return nil
 }
 
-//加载tendermint相关的配置
 func loadTMConfig(ctx *cli.Context) *tmcfg.Config {
 	tmHome := tendermintHomeFromEthermint(ctx)
 	baseConfig := tmcfg.DefaultBaseConfig()

@@ -5,6 +5,7 @@ import (
 	ethTypes "github.com/ethereum/go-ethereum/core/types"
 
 	"github.com/tendermint/tendermint/abci/types"
+	abciTypes "github.com/tendermint/tendermint/abci/types"
 )
 
 // MinerRewardStrategy is a mining strategy
@@ -23,4 +24,10 @@ type ValidatorsStrategy interface {
 type Strategy struct {
 	MinerRewardStrategy
 	ValidatorsStrategy
+
+	curValidators []abciTypes.ValidatorUpdate
+}
+
+func (strategy *Strategy) SetValidators(validators []abciTypes.ValidatorUpdate) {
+	strategy.curValidators = validators
 }

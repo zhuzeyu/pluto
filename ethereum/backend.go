@@ -10,12 +10,11 @@ import (
 	"github.com/ethereum/go-ethereum/node"
 	"github.com/ethereum/go-ethereum/p2p"
 	"github.com/ethereum/go-ethereum/rpc"
-
 	abciTypes "github.com/tendermint/tendermint/abci/types"
-
+	"github.com/tendermint/tendermint/mempool"
 	rpcClient "github.com/tendermint/tendermint/rpc/lib/client"
 
-	plutoTypes "github.com/pluto/types"
+	plutoTypes "github.com/zhuzeyu/pluto/types"
 )
 
 //----------------------------------------------------------------------
@@ -37,6 +36,8 @@ type Backend struct {
 
 	// client for forwarding txs to Tendermint
 	client rpcClient.HTTPClient
+
+	memPool *mempool.Mempool
 }
 
 // NewBackend creates a new Backend
@@ -85,6 +86,10 @@ func (b *Backend) Config() *eth.Config {
 	return b.ethConfig
 }
 
+func (b *Backend) SetMemPool(memPool *mempool.Mempool) {
+	b.memPool = memPool
+}
+
 //----------------------------------------------------------------------
 // Handle block processing
 
@@ -115,12 +120,11 @@ func (b *Backend) InitEthState(receiver common.Address) error {
 // UpdateHeaderWithTimeInfo uses the tendermint header to update the ethereum header
 // #unstable
 func (b *Backend) UpdateHeaderWithTimeInfo(tmHeader *abciTypes.Header) {
-	b.es.UpdateHeaderWithTimeInfo(b.ethereum.ApiBackend.ChainConfig(), uint64(tmHeader.Time),
+	b.es.UpdateHeaderWithTimeInfo(b.ethereum.APIBackend.ChainConfig(), uint64(tmHeader.Time.Unix()),
 		uint64(tmHeader.GetNumTxs()))
 }
 
 // GasLimit returns the maximum gas per block
-// #unstable
 func (b *Backend) GasLimit() uint64 {
 	return b.es.GasLimit()
 }
@@ -129,7 +133,6 @@ func (b *Backend) GasLimit() uint64 {
 // Implements: node.Service
 
 // APIs returns the collection of RPC services the ethereum package offers.
-// #stable - 0.4.0
 func (b *Backend) APIs() []rpc.API {
 	apis := b.Ethereum().APIs()
 	retApis := []rpc.API{}
@@ -150,7 +153,6 @@ func (b *Backend) APIs() []rpc.API {
 
 // Start implements node.Service, starting all internal goroutines needed by the
 // Ethereum protocol implementation.
-// #stable
 func (b *Backend) Start(_ *p2p.Server) error {
 	go b.txBroadcastLoop()
 	return nil
@@ -158,7 +160,6 @@ func (b *Backend) Start(_ *p2p.Server) error {
 
 // Stop implements node.Service, terminating all internal goroutines used by the
 // Ethereum protocol.
-// #stable
 func (b *Backend) Stop() error {
 	b.txSub.Unsubscribe()
 	b.ethereum.Stop() // nolint: errcheck
@@ -167,7 +168,6 @@ func (b *Backend) Stop() error {
 
 // Protocols implements node.Service, returning all the currently configured
 // network protocols to start.
-// #stable
 func (b *Backend) Protocols() []p2p.Protocol {
 	return nil
 }
@@ -176,17 +176,14 @@ func (b *Backend) Protocols() []p2p.Protocol {
 // We need a block processor that just ignores PoW and uncles and so on
 
 // NullBlockProcessor does not validate anything
-// #unstable
 type NullBlockProcessor struct{}
 
 // ValidateBody does not validate anything
-// #unstable
 func (v *NullBlockProcessor) ValidateBody(block *ethTypes.Block) error {
 	return nil
 }
 
 // ValidateState does not validate anything
-// #unstable
 func (v *NullBlockProcessor) ValidateState(block, parent *ethTypes.Block, state *state.StateDB, receipts ethTypes.Receipts, usedGas uint64) error {
 	return nil
 }

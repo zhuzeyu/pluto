@@ -9,8 +9,8 @@ import (
 	ethUtils "github.com/ethereum/go-ethereum/cmd/utils"
 	"github.com/ethereum/go-ethereum/params"
 
-	"github.com/pluto/cmd/utils"
-	"github.com/pluto/version"
+	"github.com/zhuzeyu/pluto/cmd/utils"
+	"github.com/zhuzeyu/pluto/version"
 )
 
 var (
@@ -37,7 +37,8 @@ var (
 		ethUtils.GpoPercentileFlag,
 		utils.TargetGasLimitFlag,
 		// Gas Price
-		ethUtils.GasPriceFlag,
+		//ethUtils.GasPriceFlag,
+		ethUtils.MinerGasPriceFlag,
 		//network setting
 		ethUtils.LightPeersFlag,
 		ethUtils.MaxPeersFlag,
@@ -112,7 +113,7 @@ func init() {
 			return err
 		}
 
-		ethUtils.SetupNetwork(ctx)
+		ethUtils.SetupMetrics(ctx)
 
 		return nil
 	}

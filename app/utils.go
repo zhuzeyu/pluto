@@ -33,7 +33,7 @@ func decodeTx(txBytes []byte) (*types.Transaction, error) {
 
 // Receiver returns the receiving address based on the selected strategy
 // #unstable
-func (app *EthermintApplication) Receiver() common.Address {
+func (app *PlutoApplication) Receiver() common.Address {
 	if app.strategy != nil {
 		return app.strategy.Receiver()
 	}
@@ -42,7 +42,7 @@ func (app *EthermintApplication) Receiver() common.Address {
 
 // SetValidators sets new validators on the strategy
 // #unstable
-func (app *EthermintApplication) SetValidators(validators []*abciTypes.Validator) {
+func (app *PlutoApplication) SetValidators(validators []abciTypes.ValidatorUpdate) {
 	if app.strategy != nil {
 		app.strategy.SetValidators(validators)
 	}
@@ -50,21 +50,13 @@ func (app *EthermintApplication) SetValidators(validators []*abciTypes.Validator
 
 // GetUpdatedValidators returns an updated validator set from the strategy
 // #unstable
-func (app *EthermintApplication) GetUpdatedValidators() abciTypes.ResponseEndBlock {
-	if app.strategy != nil {
-		var validatorsSlice []abciTypes.Validator
-		validators := app.strategy.GetUpdatedValidators()
-		for i := 0; i < len(validators); i++ {
-			validatorsSlice = append(validatorsSlice, *validators[i])
-		}
-		return abciTypes.ResponseEndBlock{ValidatorUpdates: validatorsSlice}
-	}
+func (app *PlutoApplication) GetUpdatedValidators() abciTypes.ResponseEndBlock {
 	return abciTypes.ResponseEndBlock{}
 }
 
 // CollectTx invokes CollectTx on the strategy
 // #unstable
-func (app *EthermintApplication) CollectTx(tx *types.Transaction) {
+func (app *PlutoApplication) CollectTx(tx *types.Transaction) {
 	if app.strategy != nil {
 		app.strategy.CollectTx(tx)
 	}

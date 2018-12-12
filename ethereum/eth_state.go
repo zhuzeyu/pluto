@@ -11,13 +11,12 @@ import (
 	ethTypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/eth"
-	//"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/ethdb"
 	"github.com/ethereum/go-ethereum/params"
 
 	abciTypes "github.com/tendermint/tendermint/abci/types"
 
-	plutoTypes "github.com/pluto/types"
+	plutoTypes "github.com/zhuzeyu/pluto/types"
 )
 
 const errorCode = 1
@@ -63,7 +62,7 @@ func (es *EthState) DeliverTx(tx *ethTypes.Transaction) abciTypes.ResponseDelive
 	defer es.mtx.Unlock()
 
 	blockchain := es.ethereum.BlockChain()
-	chainConfig := es.ethereum.ApiBackend.ChainConfig()
+	chainConfig := es.ethereum.APIBackend.ChainConfig()
 	blockHash := common.Hash{}
 	return es.work.deliverTx(blockchain, es.ethConfig, chainConfig, blockHash, tx)
 }
@@ -173,7 +172,7 @@ type workState struct {
 }
 
 // nolint: unparam
-func (ws *workState) accumulateRewards(strategy *emtTypes.Strategy) {
+func (ws *workState) accumulateRewards(strategy *plutoTypes.Strategy) {
 	//ws.state.AddBalance(ws.header.Coinbase, ethash.FrontierBlockReward)
 	//todo:后续要获取到块的validators列表根据voting power按比例分配收益
 	ws.header.GasUsed = *ws.totalUsedGas
@@ -267,7 +266,7 @@ func newBlockHeader(receiver common.Address, prevBlock *ethTypes.Block) *ethType
 	return &ethTypes.Header{
 		Number:     prevBlock.Number().Add(prevBlock.Number(), big.NewInt(1)),
 		ParentHash: prevBlock.Hash(),
-		GasLimit:   core.CalcGasLimit(prevBlock),
+		GasLimit:   core.CalcGasLimit(prevBlock, 0, 0),
 		Coinbase:   receiver,
 	}
 }
